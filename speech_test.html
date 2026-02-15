@@ -3,133 +3,64 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SpeechRecognition test (robust)</title>
+  <title>SpeechRecognition test (clear diagnostics)</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 18px; line-height: 1.35; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .card { border: 1px solid #e8e8e8; border-radius: 16px; padding: 12px; background:#fff; }
-    button, select { font-size: 14px; }
-    button { padding: 10px 14px; border-radius: 12px; border: 1px solid #bbb; background: #fff; cursor: pointer; }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-    select { padding: 9px 10px; border-radius: 12px; border:1px solid #bbb; background:#fff; }
-    .pill { display:inline-block; padding: 6px 10px; border-radius: 999px; border:1px solid #ddd; background:#f7f7f7; }
-    #final { font-size: 18px; padding: 10px; border: 1px solid #ddd; border-radius: 12px; min-height: 52px; }
-    #interim { color: #666; padding: 8px 10px; border: 1px dashed #ddd; border-radius: 12px; min-height: 34px; }
-    #log { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px;
-           border: 1px solid #eee; border-radius: 12px; padding: 10px; background: #fafafa; max-height: 320px; overflow:auto; }
-    .warn { color: #b45309; }
-    .ok { color: #15803d; }
-    .muted { color:#666; font-size: 13px; }
-    .divider { height: 1px; background:#eee; margin: 12px 0; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 18px; }
+    .pill { display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #ddd; background:#f7f7f7; margin: 0 8px 8px 0; }
+    button { padding:10px 14px; border-radius:12px; border:1px solid #bbb; background:#fff; cursor:pointer; margin-right:8px; }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    #banner { padding: 10px 12px; border-radius: 14px; border:1px solid #e8e8e8; background:#fff; margin: 10px 0 14px; }
+    #final { border:1px solid #ddd; border-radius:12px; padding:10px; min-height:52px; font-size:18px; }
+    #log { white-space:pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px;
+           border:1px solid #eee; border-radius:12px; padding:10px; background:#fafafa; max-height:260px; overflow:auto; margin-top: 12px;}
   </style>
 </head>
 <body>
-  <h2>SpeechRecognition test (robust watchdog)</h2>
+  <h2>SpeechRecognition test (clear diagnostics)</h2>
 
-  <div class="row" style="margin-bottom:10px;">
-    <span class="pill" id="securePill">secure?</span>
-    <span class="pill" id="originPill">origin</span>
-    <span class="pill" id="apiPill">SpeechRecognition?</span>
+  <div>
+    <span class="pill" id="uaPill"></span>
+    <span class="pill" id="originPill"></span>
+    <span class="pill" id="securePill"></span>
+    <span class="pill" id="apiPill"></span>
+    <span class="pill" id="resultsPill"></span>
   </div>
 
-  <div class="card" style="margin-bottom:12px;">
-    <div class="row">
-      <div>
-        <div class="muted">Language</div>
-        <select id="lang">
-          <option value="ru-RU">ru-RU</option>
-          <option value="en-US" selected>en-US</option>
-          <option value="en-GB">en-GB</option>
-          <option value="es-ES">es-ES</option>
-        </select>
-      </div>
+  <div id="banner"></div>
 
-      <div>
-        <div class="muted">Mode</div>
-        <select id="mode">
-          <option value="phrase" selected>One phrase</option>
-          <option value="continuous">Continuous</option>
-        </select>
-      </div>
-
-      <div>
-        <div class="muted">Interim</div>
-        <select id="interimSel">
-          <option value="off" selected>Off</option>
-          <option value="on">On</option>
-        </select>
-      </div>
-
-      <div>
-        <div class="muted">Global watchdog</div>
-        <select id="abortDelay">
-          <option value="0">Off</option>
-          <option value="8000" selected>8s</option>
-          <option value="12000">12s</option>
-        </select>
-      </div>
-
-      <div>
-        <div class="muted">After speechend watchdog</div>
-        <select id="afterSpeechEndDelay">
-          <option value="0">Off</option>
-          <option value="1500">1.5s</option>
-          <option value="2000" selected>2s</option>
-          <option value="3000">3s</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="row">
-      <button id="btnStart">🎤 Start</button>
-      <button id="btnStop" disabled>⏹ Stop</button>
-      <button id="btnAbort" disabled>🛑 Abort</button>
-      <button id="btnClear">🧹 Clear</button>
-      <button id="btnMicPerm">🎙 Check mic permission</button>
-    </div>
-
-    <p id="hint" class="warn" style="margin:10px 0 0;"></p>
+  <div>
+    <button id="btnStart">🎤 Start</button>
+    <button id="btnStop" disabled>⏹ Stop</button>
+    <button id="btnClear">🧹 Clear</button>
   </div>
 
-  <div class="card" style="margin-bottom:12px;">
-    <div class="muted" style="margin: 0 0 6px;">Final:</div>
+  <div style="margin-top:12px;">
+    <div style="margin:8px 0 6px; color:#666;">Final:</div>
     <div id="final"></div>
-
-    <div class="muted" style="margin: 12px 0 6px;">Interim:</div>
-    <div id="interim"></div>
   </div>
 
-  <div class="card">
-    <div class="muted" style="margin: 0 0 6px;">Log:</div>
-    <div id="log"></div>
-  </div>
+  <div id="log"></div>
 
 <script>
 (() => {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  const uaPill = document.getElementById('uaPill');
+  const originPill = document.getElementById('originPill');
+  const securePill = document.getElementById('securePill');
+  const apiPill = document.getElementById('apiPill');
+  const resultsPill = document.getElementById('resultsPill');
+
+  const banner = document.getElementById('banner');
   const logEl = document.getElementById('log');
   const finalEl = document.getElementById('final');
-  const interimEl = document.getElementById('interim');
-  const hintEl = document.getElementById('hint');
 
   const btnStart = document.getElementById('btnStart');
   const btnStop = document.getElementById('btnStop');
-  const btnAbort = document.getElementById('btnAbort');
   const btnClear = document.getElementById('btnClear');
-  const btnMicPerm = document.getElementById('btnMicPerm');
 
-  const langSel = document.getElementById('lang');
-  const modeSel = document.getElementById('mode');
-  const interimSel = document.getElementById('interimSel');
-  const abortDelaySel = document.getElementById('abortDelay');
-  const afterSpeechEndDelaySel = document.getElementById('afterSpeechEndDelay');
-
-  const securePill = document.getElementById('securePill');
-  const originPill = document.getElementById('originPill');
-  const apiPill = document.getElementById('apiPill');
-
-  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition = null;
+  let resultsCount = 0;
 
   function now() { return new Date().toLocaleTimeString(); }
   function log(msg) {
@@ -137,226 +68,90 @@
     logEl.scrollTop = logEl.scrollHeight;
   }
 
-  securePill.textContent = `isSecureContext: ${window.isSecureContext}`;
-  originPill.textContent = `origin: ${location.origin}`;
-  apiPill.textContent = `SpeechRecognition: ${SpeechRec ? "YES" : "NO"}`;
+  function detectBrowser(ua) {
+    const isSamsung = /SamsungBrowser\//i.test(ua);
+    const isCriOS = /CriOS\//i.test(ua); // iOS Chrome
+    const isChrome = /Chrome\//i.test(ua) && !isSamsung;
+    const isWebView = /; wv\)/i.test(ua) || /Version\/\d+\.\d+ Chrome\/\d+/i.test(ua) && /Mobile/i.test(ua) && !/Safari\/\d+/i.test(ua);
+    if (isSamsung) return "Samsung Internet (SamsungBrowser)";
+    if (isWebView) return "Android WebView (in-app browser)";
+    if (isCriOS) return "Chrome on iOS (CriOS)";
+    if (isChrome) return "Google Chrome";
+    return "Unknown/Other";
+  }
+
+  function setPills() {
+    const ua = navigator.userAgent;
+    uaPill.textContent = `Browser: ${detectBrowser(ua)}`;
+    originPill.textContent = `origin: ${location.origin}`;
+    securePill.textContent = `secure: ${window.isSecureContext}`;
+    apiPill.textContent = `SpeechRecognition: ${SpeechRec ? "YES" : "NO"}`;
+    resultsPill.textContent = `results: ${resultsCount}`;
+  }
+
+  setPills();
 
   if (!window.isSecureContext) {
-    hintEl.textContent = "⚠️ Not secure context. Need https for Web Speech in practice.";
+    banner.textContent = "⚠️ Не secure context (нужен https). На GitHub Pages должно быть https.";
   } else if (!SpeechRec) {
-    hintEl.textContent = "⚠️ SpeechRecognition API not available. Use Chrome/Edge desktop.";
+    banner.textContent = "⚠️ SpeechRecognition API недоступен в этом браузере.";
   } else {
-    hintEl.textContent = "✅ Нажми Start → скажи 2–3 сек → тишина 2–4 сек. Если сервис зависнет, watchdog принудительно abort().";
-    hintEl.className = "ok";
+    banner.textContent = "✅ Нажми Start → скажи фразу → замолчи. Если есть результат — он появится в Final и увеличится счётчик results.";
   }
 
-  let recognition = null;
-  let running = false;
-
-  let globalTimer = null;
-  let afterSpeechEndTimer = null;
-
-  let sawResult = false;
-  let sawEnd = false;
-  let sawSpeechEnd = false;
-
-  function setUI(isRunning) {
-    running = isRunning;
-    btnStart.disabled = isRunning;
-    btnStop.disabled = !isRunning;
-    btnAbort.disabled = !isRunning;
-
-    langSel.disabled = isRunning;
-    modeSel.disabled = isRunning;
-    interimSel.disabled = isRunning;
-    abortDelaySel.disabled = isRunning;
-    afterSpeechEndDelaySel.disabled = isRunning;
+  function setUI(running) {
+    btnStart.disabled = running;
+    btnStop.disabled = !running;
   }
 
-  function clearTimers() {
-    if (globalTimer) { clearTimeout(globalTimer); globalTimer = null; }
-    if (afterSpeechEndTimer) { clearTimeout(afterSpeechEndTimer); afterSpeechEndTimer = null; }
-  }
-
-  function armGlobalWatchdog() {
-    if (globalTimer) clearTimeout(globalTimer);
-    const delay = Number(abortDelaySel.value || 0);
-    if (!delay) return;
-
-    globalTimer = setTimeout(() => {
-      if (!recognition) return;
-      if (sawResult || sawEnd) return;
-      log(`Global watchdog: no result/end after ${delay/1000}s → abort()`);
-      try { recognition.abort(); } catch(e) { log(`abort exception: ${e?.message || e}`); }
-    }, delay);
-  }
-
-  function armAfterSpeechEndWatchdog() {
-    if (afterSpeechEndTimer) clearTimeout(afterSpeechEndTimer);
-    const delay = Number(afterSpeechEndDelaySel.value || 0);
-    if (!delay) return;
-
-    afterSpeechEndTimer = setTimeout(() => {
-      if (!recognition) return;
-      if (sawResult || sawEnd) return;
-      log(`After-speechend watchdog: speech ended but no result/end in ${delay/1000}s → abort()`);
-      try { recognition.abort(); } catch(e) { log(`abort exception: ${e?.message || e}`); }
-    }, delay);
-  }
-
-  function resetFlags() {
-    sawResult = false;
-    sawEnd = false;
-    sawSpeechEnd = false;
-  }
-
-  function buildRecognition() {
-    const r = new SpeechRec();
-
-    r.lang = langSel.value;
-
-    const mode = modeSel.value;
-    const interimOn = interimSel.value === "on";
-
-    if (mode === "phrase") {
-      r.continuous = false;
-      r.interimResults = false;
-    } else {
-      r.continuous = true;
-      r.interimResults = interimOn;
-    }
-
-    r.maxAlternatives = 3;
-
-    r.onstart = () => log("onstart");
-    r.onaudiostart = () => log("onaudiostart");
-    r.onsoundstart = () => log("onsoundstart");
-    r.onspeechstart = () => log("onspeechstart");
-
-    r.onspeechend = () => {
-      log("onspeechend");
-      sawSpeechEnd = true;
-      // если речь закончилась — ждём result/end совсем недолго, иначе abort()
-      armAfterSpeechEndWatchdog();
-    };
-
-    r.onsoundend = () => log("onsoundend");
-    r.onaudioend = () => log("onaudioend");
-
-    r.onnomatch = () => {
-      log("onnomatch");
-      // nomatch тоже "событие", но результат не пришёл
-      armAfterSpeechEndWatchdog();
-    };
-
-    r.onresult = (event) => {
-      sawResult = true;
-      clearTimers();
-
-      let interim = "";
-      let final = "";
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const res = event.results[i];
-        const top = res[0];
-        const text = (top?.transcript || "").trim();
-        const conf = top?.confidence;
-
-        if (!text) continue;
-
-        if (res.isFinal) {
-          final += (final ? " " : "") + text;
-          log(`onresult FINAL: "${text}" (conf: ${Number.isFinite(conf) ? conf.toFixed(3) : "n/a"})`);
-        } else {
-          interim += (interim ? " " : "") + text;
-        }
-      }
-
-      if (interim) interimEl.textContent = interim;
-      if (final) {
-        finalEl.textContent = (finalEl.textContent ? (finalEl.textContent + " ") : "") + final;
-        interimEl.textContent = "";
-      }
-    };
-
-    r.onerror = (event) => {
-      clearTimers();
-      log(`onerror: ${event.error}${event.message ? (" | " + event.message) : ""}`);
-      setUI(false);
-    };
-
-    r.onend = () => {
-      sawEnd = true;
-      clearTimers();
-      log("onend");
-      setUI(false);
-    };
-
-    return r;
-  }
-
-  btnStart.addEventListener("click", () => {
+  btnStart.addEventListener('click', () => {
     if (!SpeechRec) { log("SpeechRecognition API not available"); return; }
-
-    interimEl.textContent = "";
-    resetFlags();
-    clearTimers();
-
     try {
-      recognition = buildRecognition();
+      recognition = new SpeechRec();
+      recognition.lang = "ru-RU";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => log("onstart");
+      recognition.onaudiostart = () => log("onaudiostart");
+      recognition.onspeechstart = () => log("onspeechstart");
+      recognition.onspeechend = () => log("onspeechend");
+      recognition.onend = () => { log("onend"); setUI(false); };
+      recognition.onerror = (e) => { log(`onerror: ${e.error}${e.message ? (" | " + e.message) : ""}`); setUI(false); };
+
+      recognition.onresult = (event) => {
+        resultsCount++;
+        setPills();
+        const text = (event.results?.[0]?.[0]?.transcript || "").trim();
+        log(`onresult: "${text}"`);
+        if (text) finalEl.textContent = text;
+      };
+
       recognition.start();
       setUI(true);
       log("Called recognition.start()");
-      armGlobalWatchdog();
     } catch (e) {
-      clearTimers();
-      log("Exception on start: " + (e?.message || e));
+      log("Exception: " + (e?.message || e));
       setUI(false);
     }
   });
 
-  btnStop.addEventListener("click", () => {
+  btnStop.addEventListener('click', () => {
     if (!recognition) return;
     try {
-      log("Called recognition.stop()");
       recognition.stop();
-      // подстрахуемся: если stop подвесит, watchdog добьёт
-      armGlobalWatchdog();
-      if (sawSpeechEnd) armAfterSpeechEndWatchdog();
+      log("Called recognition.stop()");
     } catch (e) {
       log("Exception on stop: " + (e?.message || e));
     }
   });
 
-  btnAbort.addEventListener("click", () => {
-    if (!recognition) return;
-    try {
-      log("Called recognition.abort()");
-      recognition.abort();
-    } catch (e) {
-      log("Exception on abort: " + (e?.message || e));
-    }
-  });
-
-  btnClear.addEventListener("click", () => {
+  btnClear.addEventListener('click', () => {
     finalEl.textContent = "";
-    interimEl.textContent = "";
     logEl.textContent = "";
+    resultsCount = 0;
+    setPills();
     log("Cleared.");
-  });
-
-  btnMicPerm.addEventListener("click", async () => {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      log("getUserMedia not available");
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      log("getUserMedia OK: mic permission granted");
-      stream.getTracks().forEach(t => t.stop());
-    } catch (e) {
-      log("getUserMedia ERROR: " + (e?.name || "") + " " + (e?.message || e));
-    }
   });
 
   log("Page loaded. UserAgent: " + navigator.userAgent);
