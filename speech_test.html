@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SpeechRecognition test (GitHub Pages)</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 18px; line-height: 1.35; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    button { padding: 10px 14px; border-radius: 10px; border: 1px solid #bbb; background: #fff; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .pill { display:inline-block; padding: 6px 10px; border-radius: 999px; border:1px solid #ddd; background:#f7f7f7; }
+    #final { font-size: 18px; padding: 10px; border: 1px solid #ddd; border-radius: 12px; min-height: 48px; }
+    #interim { color: #666; padding: 8px 10px; border: 1px dashed #ddd; border-radius: 12px; min-height: 32px; }
+    #log { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px;
+           border: 1px solid #eee; border-radius: 12px; padding: 10px; background: #fafafa; max-height: 240px; overflow:auto; }
+    .warn { color: #b45309; }
+    .err { color: #b91c1c; }
+    .ok { color: #15803d; }
+  </style>
+</head>
+<body>
+  <h2>SpeechRecognition test (GitHub Pages)</h2>
+
+  <div class="row">
+    <span class="pill" id="securePill">secure?</span>
+    <span class="pill" id="originPill">origin</span>
+    <span class="pill" id="apiPill">SpeechRecognition?</span>
+  </div>
+
+  <p class="warn" id="hint"></p>
+
+  <div class="row" style="margin: 12px 0;">
+    <button id="btnStart">🎤 Start</button>
+    <button id="btnStop" disabled>⏹ Stop</button>
+    <button id="btnClear">🧹 Clear</button>
+    <button id="btnMicPerm">🎙 Check mic permission</button>
+  </div>
+
+  <div>
+    <div style="margin: 10px 0 6px;">Final:</div>
+    <div id="final"></div>
+
+    <div style="margin: 12px 0 6px;">Interim:</div>
+    <div id="interim"></div>
+  </div>
+
+  <div style="margin-top: 14px;">
+    <div style="margin: 10px 0 6px;">Log:</div>
+    <div id="log"></div>
+  </div>
+
+<script>
+(() => {
+  const logEl = document.getElementById('log');
+  const finalEl = document.getElementById('final');
+  const interimEl = document.getElementById('interim');
+  const hintEl = document.getElementById('hint');
+
+  const btnStart = document.getElementById('btnStart');
+  const btnStop = document.getElementById('btnStop');
+  const btnClear = document.getElementById('btnClear');
+  const btnMicPerm = document.getElementById('btnMicPerm');
+
+  const securePill = document.getElementById('securePill');
+  const originPill = document.getElementById('originPill');
+  const apiPill = document.getElementById('apiPill');
+
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  function log(msg, cls="") {
+    const t = new Date().toLocaleTimeString();
+    const line = `[${t}] ${msg}\n`;
+    logEl.textContent += line;
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  // Environment info
+  securePill.textContent = `isSecureContext: ${window.isSecureContext}`;
+  originPill.textContent = `origin: ${location.origin}`;
+  apiPill.textContent = `SpeechRecognition: ${SpeechRec ? "YES" : "NO"}`;
+
+  if (!window.isSecureContext) {
+    hintEl.textContent = "⚠️ Страница не в secure context. SpeechRecognition обычно требует https. GitHub Pages — https, там должно быть лучше.";
+  } else if (!SpeechRec) {
+    hintEl.textContent = "⚠️ В этом браузере нет SpeechRecognition/WebKitSpeechRecognition. Попробуй Chrome/Edge на компьютере.";
+  } else {
+    hintEl.textContent = "✅ API найден. Нажми Start и произнеси фразу.";
+    hintEl.className = "ok";
+  }
+
+  let recognition = null;
+  let isRunning = false;
+
+  function setUI(running) {
+    isRunning = running;
+    btnStart.disabled = running;
+    btnStop.disabled = !running;
+  }
+
+  function buildRecognition() {
+    const r = new SpeechRec();
+    r.lang = "en-US";            // поменяй на "ru-RU", если хочешь русский
+    r.interimResults = true;
+    r.continuous = true;         // можно false, если хочешь один короткий захват
+    r.maxAlternatives = 3;
+
+    r.onstart = () => log("onstart: recognition started");
+    r.onaudiostart = () => log("onaudiostart");
+    r.onsoundstart = () => log("onsoundstart");
+    r.onspeechstart = () => log("onspeechstart");
+    r.onspeechend = () => log("onspeechend");
+    r.onsoundend = () => log("onsoundend");
+    r.onaudioend = () => log("onaudioend");
+
+    r.onresult = (event) => {
+      let interim = "";
+      let final = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const res = event.results[i];
+        const top = res[0];
+        const text = top.transcript;
+        const conf = top.confidence;
+
+        if (res.isFinal) {
+          final += text;
+          log(`onresult FINAL: "${text.trim()}" (confidence: ${Number.isFinite(conf) ? conf.toFixed(3) : "n/a"})`);
+        } else {
+          interim += text;
+        }
+      }
+
+      if (interim) interimEl.textContent = interim.trim();
+      if (final) {
+        finalEl.textContent = (finalEl.textContent ? (finalEl.textContent + " ") : "") + final.trim();
+        interimEl.textContent = "";
+      }
+    };
+
+    r.onerror = (event) => {
+      // Частые: "not-allowed", "service-not-allowed", "network", "no-speech", "audio-capture"
+      log(`onerror: ${event.error} ${event.message ? (" | " + event.message) : ""}`, "err");
+      setUI(false);
+    };
+
+    r.onend = () => {
+      log("onend: recognition ended");
+      setUI(false);
+    };
+
+    return r;
+  }
+
+  btnStart.addEventListener("click", () => {
+    if (!SpeechRec) { log("SpeechRecognition API not available", "err"); return; }
+
+    try {
+      recognition = buildRecognition();
+      recognition.start();
+      setUI(true);
+      log("Called recognition.start()");
+    } catch (e) {
+      log("Exception on start: " + (e?.message || e), "err");
+      setUI(false);
+    }
+  });
+
+  btnStop.addEventListener("click", () => {
+    if (!recognition) return;
+    try {
+      recognition.stop();
+      log("Called recognition.stop()");
+    } catch (e) {
+      log("Exception on stop: " + (e?.message || e), "err");
+    }
+  });
+
+  btnClear.addEventListener("click", () => {
+    finalEl.textContent = "";
+    interimEl.textContent = "";
+    logEl.textContent = "";
+  });
+
+  // Optional: mic permission check (not recognition, just permission)
+  btnMicPerm.addEventListener("click", async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      log("getUserMedia not available in this browser", "err");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      log("getUserMedia OK: microphone permission granted");
+      stream.getTracks().forEach(t => t.stop());
+    } catch (e) {
+      log("getUserMedia ERROR: " + (e?.name || "") + " " + (e?.message || e), "err");
+    }
+  });
+
+  log("Page loaded. UserAgent: " + navigator.userAgent);
+})();
+</script>
+</body>
+</html>
